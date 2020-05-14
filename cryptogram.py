@@ -14,6 +14,7 @@
 
     > XY  --> (any two letters); Swap letters X and Y in the working solution.
     > r   --> Retype the original cryptogram text.
+    > f   --> Show letter frequency alongside English letter ranking.
     > q   --> Quit.
 """
 
@@ -22,6 +23,8 @@
 # Imports
 
 import sys
+
+from collections import Counter
 
 
 # ____________________________________________________________
@@ -32,6 +35,13 @@ def swap(s, x, y):
     s = s.replace(y, '_')
     s = s.replace(x, y)
     return s.replace('_', x)
+
+def show_letter_frequencies(s):
+    """ Show the top 10 letters in s, sorted most-frequent first. """
+    letter_counts = Counter(s.replace(' ', ''))
+    letters = [letter for letter, _ in letter_counts.most_common()[:10]]
+    print(' '.join(letters))
+    print('e t a o i n s r h d')
 
 
 # ____________________________________________________________
@@ -59,6 +69,9 @@ while True:
         soln = crypt
         for pair in swaps:
             soln = swap(soln, pair[0], pair[1])
+
+    elif inp == 'f':
+        show_letter_frequencies(soln)
 
     elif inp == 'q':
         print('Have a great day! :D')
