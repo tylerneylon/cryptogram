@@ -40,8 +40,8 @@ def show_letter_frequencies(s):
     """ Show the top 10 letters in s, sorted most-frequent first. """
     letter_counts = Counter(s.replace(' ', ''))
     letters = [letter for letter, _ in letter_counts.most_common()[:10]]
-    print(' '.join(letters))
-    print('e t a o i n s r h d')
+    print('Cipher letters: ', ' '.join(letters))
+    print('English letters:', 'e t a o i n s r h d')
 
 
 # ____________________________________________________________
