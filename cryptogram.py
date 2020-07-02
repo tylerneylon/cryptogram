@@ -17,6 +17,7 @@
     > f   --> Show letter frequency alongside English letter ranking.
     > ?   --> Show help (this message).
     > s   --> Shuffle all letters randomly.
+    > c   --> Show common short English words.
     > q   --> Quit.
 """
 
@@ -45,6 +46,59 @@ def show_letter_frequencies(s):
     letters = [letter for letter, _ in letter_counts.most_common()[:10]]
     print('Cipher letters: ', ' '.join(letters))
     print('English letters:', 'e t a o i n s r h d')
+
+def show_in_columns(words, col_width=6, max_width=65, indent=4):
+    """ Print the words in `words` in colums of width `col_width`, in lines of
+        maximum width `max_width`. Each line is indented by `indent` spaces; the
+        indent is included as part of the max width. The output will only look
+        good if all the words are shorter than col_width.
+    """
+    curr_line = ''
+    fmt = '%%-%ds' % col_width  # Make a format string like '%-6s'.
+    for word in words:
+        if indent + len(curr_line + (fmt % word)) > max_width:
+            assert len(curr_line.strip()) > 0
+            print(' ' * indent + curr_line)
+            curr_line = ''
+        curr_line += fmt % word
+    if len(curr_line) > 0:
+            print(' ' * indent + curr_line)
+
+def show_common_elements():
+    """ Show common 2-, 3-, and 4-letter words and common double letters.
+
+    I found these word lists here:
+    https://www3.nd.edu/~busiforc/handouts/cryptography/cryptography%20hints.html
+    """
+
+    two_letters = ['of', 'to', 'in', 'it', 'is', 'be', 'as', 'at', 'so', 'we',
+            'he', 'by', 'or', 'on', 'do', 'if', 'me', 'my', 'up', 'an', 'go',
+            'no', 'us', 'am']
+    print()
+    print('Common 2-letter words:')
+    show_in_columns(two_letters)
+
+    three_letters = ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all',
+            'any', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day',
+            'get', 'has', 'him', 'his', 'how', 'man', 'new', 'now', 'old',
+            'see', 'two', 'way', 'who', 'boy', 'did', 'its', 'let', 'put',
+            'say', 'she', 'too', 'use']
+    print()
+    print('Common 3-letter words:')
+    show_in_columns(three_letters)
+
+    four_letters = ['that', 'with', 'have', 'this', 'will', 'your', 'from',
+            'they', 'know', 'want', 'been', 'good', 'much', 'some', 'time']
+    print()
+    print('Common 4-letter words:')
+    show_in_columns(four_letters)
+
+    double_letters = ['ss', 'ee', 'tt', 'ff', 'll', 'mm', 'oo']
+    print()
+    print('Common double letters:')
+    show_in_columns(double_letters)
+
+    print()
 
 
 # ____________________________________________________________
@@ -85,6 +139,9 @@ while True:
         swaps = [(chr(i + ord('a')), chr(j + ord('a'))) for i, j in swaps]
         for pair in swaps:
             soln = swap(soln, pair[0], pair[1])
+
+    elif inp == 'c':
+        show_common_elements()
 
     elif inp == 'q':
         print('Have a great day! :D')
