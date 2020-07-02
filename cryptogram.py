@@ -15,6 +15,7 @@
     > XY  --> (any two letters); Swap letters X and Y in the working solution.
     > r   --> Retype the original cryptogram text.
     > f   --> Show letter frequency alongside English letter ranking.
+    > ?   --> Show help (this message).
     > q   --> Quit.
 """
 
@@ -72,6 +73,9 @@ while True:
 
     elif inp == 'f':
         show_letter_frequencies(soln)
+
+    elif inp == '?':
+        print(__doc__)
 
     elif inp == 'q':
         print('Have a great day! :D')
