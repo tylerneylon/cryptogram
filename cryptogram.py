@@ -16,6 +16,7 @@
     > r   --> Retype the original cryptogram text.
     > f   --> Show letter frequency alongside English letter ranking.
     > ?   --> Show help (this message).
+    > s   --> Shuffle all letters randomly.
     > q   --> Quit.
 """
 
@@ -23,6 +24,7 @@
 # ____________________________________________________________
 # Imports
 
+import random
 import sys
 
 from collections import Counter
@@ -76,6 +78,13 @@ while True:
 
     elif inp == '?':
         print(__doc__)
+
+    elif inp == 's':
+        # Replace swaps with random swaps, one for each letter.
+        swaps = [(i, random.choice(range(26))) for i in range(26)]
+        swaps = [(chr(i + ord('a')), chr(j + ord('a'))) for i, j in swaps]
+        for pair in swaps:
+            soln = swap(soln, pair[0], pair[1])
 
     elif inp == 'q':
         print('Have a great day! :D')
