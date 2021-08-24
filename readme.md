@@ -20,6 +20,7 @@ At the prompt:
 > ?   --> Show help (this message).
 > s   --> Shuffle all letters randomly.
 > c   --> Show common short English words.
+> h   --> Print an abbreviated work history, for sharing your process.
 > q   --> Quit.
 ```
 
