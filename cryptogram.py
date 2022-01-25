@@ -43,8 +43,9 @@ from collections import Counter
 
 # These will store terminal escape codes.
 # Currently these are used by print_with_highlights().
-highlight_seq = None
-reset_seq     = None
+white_seq = None
+green_seq = None
+reset_seq = None
 
 # ____________________________________________________________
 # Functions
@@ -67,21 +68,24 @@ def get_cmd_output(cmd):
     process_completion = subprocess.run(cmd.split(), capture_output=True)
     return process_completion.stdout
 
-def print_with_highlights(s, highlights):
-    """ Print out the string s while highlighting characters in the string
-        `highlights`.
+def print_with_highlights(s, white_lets, green_lets):
+    """ Print out the string `s` while highlighting characters in white or green
+        (ish) if they're in white_lets or green_lets, respectively.
     """
-    global highlight_seq, reset_seq
+    global white_seq, green_seq, reset_seq
 
-    if highlight_seq is None:
-        highlight_seq = get_cmd_output('tput setaf 7')
-        reset_seq     = get_cmd_output('tput sgr0')
+    if white_seq is None:
+        white_seq = get_cmd_output('tput setaf 7')
+        green_seq = get_cmd_output('tput setaf 118')
+        reset_seq = get_cmd_output('tput sgr0')
 
     bytes_to_print = []
     for c in s:
         c_byte = c.encode()
-        if c in highlights:
-            bytes_to_print += [highlight_seq, c_byte, reset_seq]
+        if c in white_lets:
+            bytes_to_print += [white_seq, c_byte, reset_seq]
+        elif c in green_lets:
+            bytes_to_print += [green_seq, c_byte, reset_seq]
         else:
             bytes_to_print.append(c_byte)
     sys.stdout.buffer.write(b''.join(bytes_to_print + [b'\n']))
@@ -93,7 +97,8 @@ def show_history(crypt, swaps):
     for pair in swaps:
         s = swap(s, pair[0], pair[1])
         print(f'{pair[0]}<->{pair[1]}   ', end='', flush=True)
-        print_with_highlights(s, pair)
+        correct_lets = [let for (i, let) in enumerate(s) if let == soln[i]]
+        print_with_highlights(s, pair, correct_lets)
 
 def show_in_columns(words, col_width=6, max_width=65, indent=4):
     """ Print the words in `words` in colums of width `col_width`, in lines of
