@@ -129,3 +129,10 @@ pez candy takes its name from the german word for peppermint - pfefferminz.
 Have a great day! :D
 ```
 
+## Example color-coded solution path
+
+Below is a screenshot of a color-coded summary of me solving a puzzle.
+These are fun to check out once you've solved a particular cryptogram. :)
+
+![solution process](img/example_solve_process.png)
+
