@@ -9,6 +9,12 @@
 
     This essentially performs a kind of grep on /usr/share/dict/words,
     looking for words that could fit the given encrypted string.
+
+    Lowercase letters may be matched to anything except letters already matched
+    to different lowercase letters (for example, abbcd will match "moose" but
+    not "geese").
+
+    Uppercase letters will strictly match exactly that letter.
 """
 
 
@@ -60,7 +66,19 @@ num_crypt_letters = len(set(list(crypt)))
 N = len(crypt)
 
 with open('/usr/share/dict/words') as f:
-    words = [word.strip().lower() for word in f]
+    # Pre-process for any uppercase letters in crypt.
+    words = [
+            word.strip().lower()
+            for word in f
+            if len(word.strip()) == N and all(
+                crypt[i].islower() or word[i].upper() == crypt[i]
+                for i in range(N)
+            )
+    ]
+
+# Since we've pre-filtered for the exact-match (uppercase) letters, we can now
+# safely lowercase `crypt` and match against it.
+crypt = crypt.lower()
 
 for word in words:
     if is_match(word):
