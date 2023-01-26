@@ -13,6 +13,7 @@
     At the prompt:
 
     > XY  --> (any two letters); Swap letters X and Y in the working solution.
+    > XX  --> (same letter twice); Toggle wheter X is highlighted as correct.
     > r   --> Retype the original cryptogram text.
     > f   --> Show letter frequency alongside English letter ranking.
     > ?   --> Show help (this message).
@@ -43,18 +44,23 @@ from collections import Counter
 
 # These will store terminal escape codes.
 # Currently these are used by print_with_highlights().
-white_seq = None
+blue_seq  = None
 green_seq = None
 reset_seq = None
+white_seq = None
 
 # ____________________________________________________________
 # Functions
 
-def swap(s, x, y):
-    """ Return string s with letters x and y swapped. """
+def swap(s, marked_l, x, y):
+    """ Return (s', marked_l'), where x and y are swapped; if
+        x == y then x is toggled within the set marked_l).
+    """
+    if x == y:
+        marked_l ^= {x}
     s = s.replace(y, '_')
     s = s.replace(x, y)
-    return s.replace('_', x)
+    return (s.replace('_', x), marked_l)
 
 def show_letter_frequencies(s):
     """ Show the top 10 letters in s, sorted most-frequent first. """
@@ -67,6 +73,25 @@ def get_cmd_output(cmd):
     """ Return stdout, as a bytes object, from running `cmd`. """
     process_completion = subprocess.run(cmd.split(), capture_output=True)
     return process_completion.stdout
+
+def print_curr_str(s, marked_l):
+    """ This expects `s` = (soln, marked_lets).
+        This prints out `soln`, highlighting the letters in marked_lets.
+    """
+    global blue_seq, reset_seq
+
+    if blue_seq is None:
+        blue_seq  = get_cmd_output('tput setaf 33')
+        reset_seq = get_cmd_output('tput sgr0')
+
+    bytes_to_print = []
+    for c in s:
+        c_byte = c.encode()
+        if c in marked_l:
+            bytes_to_print += [blue_seq, c_byte, reset_seq]
+        else:
+            bytes_to_print.append(c_byte)
+    sys.stdout.buffer.write(b''.join(bytes_to_print + [b'\n']))
 
 def print_with_highlights(s, white_lets, green_lets):
     """ Print out the string `s` while highlighting characters in white or green
@@ -90,14 +115,14 @@ def print_with_highlights(s, white_lets, green_lets):
             bytes_to_print.append(c_byte)
     sys.stdout.buffer.write(b''.join(bytes_to_print + [b'\n']))
 
-def show_history(crypt, swaps):
+def show_history(crypt, swaps, final):
     """ Show the swap history of the cryptogram. """
     s = crypt
     print(f'Start   {s}')
     for pair in swaps:
-        s = swap(s, pair[0], pair[1])
+        s, _ = swap(s, set(), pair[0], pair[1])
         print(f'{pair[0]}<->{pair[1]}   ', end='', flush=True)
-        correct_lets = [let for (i, let) in enumerate(s) if let == soln[i]]
+        correct_lets = [let for (i, let) in enumerate(s) if let == final[i]]
         print_with_highlights(s, pair, correct_lets)
 
 def show_in_columns(words, col_width=6, max_width=65, indent=4):
@@ -161,9 +186,10 @@ if len(sys.argv) < 2:
     print(__doc__)
     sys.exit(0)
 
-crypt = ' '.join(sys.argv[1:])
-swaps = []
-soln  = crypt
+crypt    = ' '.join(sys.argv[1:])
+swaps    = []
+curr_str = crypt
+marked_l = set()
 
 while True:
 
@@ -176,12 +202,11 @@ while True:
     if inp == 'r':
         print(f'Original cryptogram:\n{crypt}')
         crypt = input('Replacement cryptogram: ')
-        soln = crypt
         for pair in swaps:
-            soln = swap(soln, pair[0], pair[1])
+            curr_str, marked_l = swap(curr_str, marked_l, pair[0], pair[1])
 
     elif inp == 'f':
-        show_letter_frequencies(soln)
+        show_letter_frequencies(curr_str)
 
     elif inp == '?':
         print(__doc__)
@@ -190,14 +215,16 @@ while True:
         # Replace swaps with random swaps, one for each letter.
         swaps = [(i, random.choice(range(26))) for i in range(26)]
         swaps = [(chr(i + ord('a')), chr(j + ord('a'))) for i, j in swaps]
+        soln = (crypt, set())
         for pair in swaps:
             soln = swap(soln, pair[0], pair[1])
+        curr_str, marked_l = soln[0], set()  # No marked letters.
 
     elif inp == 'c':
         show_common_elements()
 
     elif inp == 'h':
-        show_history(crypt, swaps)
+        show_history(crypt, swaps, curr_str)
 
     elif inp == 'q':
         print('Have a great day! :D')
@@ -205,6 +232,6 @@ while True:
         
     elif len(inp) == 2:
         swaps.append(inp)
-        soln = swap(soln, inp[0], inp[1])
+        curr_str, marked_l = swap(curr_str, marked_l, inp[0], inp[1])
 
-    print(soln)
+    print_curr_str(curr_str, marked_l)
