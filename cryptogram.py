@@ -201,7 +201,7 @@ while True:
 
     if inp == 'r':
         print(f'Original cryptogram:\n{crypt}')
-        crypt = input('Replacement cryptogram: ')
+        curr_str = crypt = input('Replacement cryptogram: ')
         for pair in swaps:
             curr_str, marked_l = swap(curr_str, marked_l, pair[0], pair[1])
 
