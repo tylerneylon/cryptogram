@@ -36,6 +36,7 @@
 # ____________________________________________________________
 # Imports
 
+import json
 import random
 import subprocess
 import sys
@@ -55,6 +56,9 @@ white_seq = None
 
 # ____________________________________________________________
 # Functions
+
+def log(obj):
+    log_file.write(json.dumps(obj) + '\n')
 
 def swap(s, marked_l, x, y):
     """ Return (s', marked_l'), where x and y are swapped; if
@@ -190,10 +194,13 @@ if len(sys.argv) < 2:
     print(__doc__)
     sys.exit(0)
 
+log_file = open('cryptogram_log.jsonl', 'a')
 crypt    = ' '.join(sys.argv[1:])
 swaps    = []
 curr_str = crypt
 marked_l = set()
+
+log({'action': 'init', 'crypt': crypt})
 
 while True:
 
@@ -206,6 +213,7 @@ while True:
     if inp == 'r':
         print(f'Original cryptogram:\n{crypt}')
         curr_str = crypt = input('Replacement cryptogram: ')
+        log({'action': 'replace', 'crypt': crypt})
         for pair in swaps:
             curr_str, marked_l = swap(curr_str, marked_l, pair[0], pair[1])
 
@@ -236,6 +244,7 @@ while True:
         
     elif len(inp) == 2:
         swaps.append(inp)
+        log({'action': 'swap', 'letters': inp})
         curr_str, marked_l = swap(curr_str, marked_l, inp[0], inp[1])
 
     print_curr_str(curr_str, marked_l)
