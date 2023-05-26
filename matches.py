@@ -45,8 +45,10 @@ def is_match(cipher, word, num_cipher_letters, n):
     num_word_letters = len(set(list(word)))
     if num_word_letters != num_cipher_letters:
         return False
-    for i in range(N):
-        for j in range(i, N):
+    for i in range(n):
+        if cipher[i].isupper() and cipher[i].lower() != word[i]:
+            return False
+        for j in range(i, n):
             if cipher[i] == cipher[j] and word[i] != word[j]:
                 return False
     return True
@@ -92,7 +94,8 @@ load_dictionary()
 # the words in word_list. This allows us to sort by decreasing max_rank
 # and display more likely plaintext candidates first.
 
-plain_words = []  # plain_words[i] = [(plain_word, rank)*]
+num_words   = len(ciphers)
+plain_words = []  # plain_words[i] = [(len_i_plain_word, rank)*]
 for cipher in ciphers:
     n = len(cipher)
     num_cipher_letters = len(set(list(cipher)))
@@ -103,14 +106,35 @@ for cipher in ciphers:
         if is_match(cipher, w, num_cipher_letters, n)
     ])
 
+# Iterate over all tuples from plain_words, and pick out the compatible ones.
+
+decrypts = []  # Each item is (max_rank, word_list).
+idx = [0] * len(num_words)
+while True:
+    letter_map = {}
+    max_rank   = 0
+    decrypt    = []
+    for i in range(num_words):
+        plain_word = plain_words[i][idx[i]]
+        if did_update_map(letter_map, plain_word):
+            max_rank = max(max_rank, idx[i])
+            decrypt.append(plain_word)
+        else:
+            break
+    else:  # Didn't break out.
+        decrypts.append((max_rank, decrypt))
+    # TODO HERE: Update idx.
+
+
+
 # TODO HERE
-# * Make is_match() check for capital letter matches.
-# * Write a function that accepts a partial letter mapping
-#   along with a cipher/plain pair, and returns either False
-#   if they are incompatible, or a combined letter mapping.
-# * Use the above to build a [(max_rank, word_list)*] list.
-# * Sort that sucka.
-# * Print out the top 20 results.
+# * [x] Make is_match() check for capital letter matches.
+# * [ ] Write a function that accepts a partial letter mapping
+#       along with a cipher/plain pair, and returns either False
+#       if they are incompatible, or a combined letter mapping.
+# * [ ] Use the above to build a [(max_rank, word_list)*] list.
+# * [ ] Sort that sucka.
+# * [ ] Print out the top 20 results.
 
 
 
