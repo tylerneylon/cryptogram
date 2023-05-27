@@ -109,7 +109,7 @@ for cipher in ciphers:
 # Iterate over all tuples from plain_words, and pick out the compatible ones.
 
 decrypts = []  # Each item is (max_rank, word_list).
-idx = [0] * len(num_words)
+idx = [0] * num_words
 while True:
     letter_map = {}
     max_rank   = 0
@@ -123,9 +123,14 @@ while True:
             break
     else:  # Didn't break out.
         decrypts.append((max_rank, decrypt))
-    # TODO HERE: Update idx.
-
-
+    incrementables = [j for j in range(num_words)
+                      if idx[j] < len(plain_words[j]) - 1]
+    if len(incrementables) == 0:
+        break
+    j = incrementables[-1]
+    idx[j] += 1
+    for k in range(j + 1, num_words):
+        idx[k] = 0
 
 # TODO HERE
 # * [x] Make is_match() check for capital letter matches.
