@@ -31,9 +31,11 @@ from glob import glob
 
 # I use globals for these because it's a small program and this way I don't have
 # to recalculate their values.
-crypt = None
+crypt = None  # XXX Needed?
 num_crypt_letters = None
-N = None
+N = None  # XXX Needed?
+
+N_MATCHES_TO_SHOW = 20
 
 
 # ____________________________________________________________
@@ -132,16 +134,25 @@ while True:
     for k in range(j + 1, num_words):
         idx[k] = 0
 
+# Sort the potential decrypts, putting more likely matches first.
+decrypts.sort()
+
+# Print out the top results.
+for i, decrypt in enumerate(decrypts[:N_MATCHES_TO_SHOW]):
+    print(f'{i + 1:2d}.', ' '.join(decrypt[1]))
+
+
 # TODO HERE
 # * [x] Make is_match() check for capital letter matches.
 # * [ ] Write a function that accepts a partial letter mapping
 #       along with a cipher/plain pair, and returns either False
 #       if they are incompatible, or a combined letter mapping.
-# * [ ] Use the above to build a [(max_rank, word_list)*] list.
-# * [ ] Sort that sucka.
-# * [ ] Print out the top 20 results.
-
-
+# * [x] Use the above to build a [(max_rank, word_list)*] list.
+# * [x] Sort that sucka.
+# * [x] Print out the top N_MATCHES_TO_SHOW results.
+# * [ ] Comment out old code below (if False it).
+# * [ ] Debug.
+# * [ ] Review script and drop unused globals and functions.
 
 
 
