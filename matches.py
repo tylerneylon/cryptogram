@@ -23,6 +23,7 @@
 # Imports
 
 import sys
+from collections import defaultdict
 from glob import glob
 
 
@@ -89,7 +90,7 @@ def load_dictionary():
         with open(fname) as f:
             for word in f:
                 w = word.lower().strip()
-                words[len(n)].append(w)
+                words[len(w)].append(w)
 
 
 # ____________________________________________________________
@@ -99,7 +100,7 @@ if len(sys.argv) < 2:
     print(__doc__)
     sys.exit(0)
 
-ciphers = sys.argv[2:]
+ciphers = sys.argv[1:]
 load_dictionary()
 
 # Build up a list of all possibilities. Each candidate is stored as
@@ -119,31 +120,54 @@ for cipher in ciphers:
         if is_match(cipher, w, num_cipher_letters, n)
     ])
 
+# XXX
+print(f'len(plain_words) = {len(plain_words)}')
+for i, word_list in enumerate(plain_words):
+    print(f'For {ciphers[i]}:')
+    for w in word_list[:3]:
+        print(f'    {w}')
+print('\nList lengths:')
+for i, word_list in enumerate(plain_words):
+    print(f'{ciphers[i]}: {len(word_list)}')
+
 # Iterate over all tuples from plain_words, and pick out the compatible ones.
 
 decrypts = []  # Each item is (max_rank, word_list).
 idx = [0] * num_words
+max_depth = 0
+max_max_depth = max(map(len, plain_words))
+seen = set()
 while True:
-    letter_map = {}
-    max_rank   = 0
-    decrypt    = []
-    for i in range(num_words):
-        plain_word = plain_words[i][idx[i]]
-        if did_update_map(letter_map, ciphers[i], plain_word):
-            max_rank = max(max_rank, idx[i])
-            decrypt.append(plain_word)
-        else:
-            break
-    else:  # Didn't break out.
-        decrypts.append((max_rank, decrypt))
+    if tuple(idx) not in seen:
+        status = f'[{max_depth:3d}] ' + ' '.join(map(str, idx)) + ' ' * 5
+        print('\r' + status, end='', flush=True)
+        letter_map = {}
+        max_rank   = 0
+        decrypt    = []
+        for i in range(num_words):
+            plain_word = plain_words[i][idx[i]]
+            if did_update_map(letter_map, ciphers[i], plain_word):
+                max_rank = max(max_rank, idx[i])
+                decrypt.append(plain_word)
+            else:
+                break
+        else:  # Didn't break out.
+            decrypts.append((max_rank, decrypt))
+            print('\r' + ' '.join(decrypt) + ' ' *20)  # XXX
+    seen.add(tuple(idx))
     incrementables = [j for j in range(num_words)
-                      if idx[j] < len(plain_words[j]) - 1]
+                      if idx[j] < min(len(plain_words[j]), max_depth) - 1]
     if len(incrementables) == 0:
-        break
-    j = incrementables[-1]
-    idx[j] += 1
-    for k in range(j + 1, num_words):
-        idx[k] = 0
+        if max_depth == max_max_depth:
+            break
+        max_depth += 1
+        idx = [0] * num_words
+    else:
+        j = incrementables[-1]
+        idx[j] += 1
+        for k in range(j + 1, num_words):
+            idx[k] = 0
+print()  # XXX
 
 # Sort the potential decrypts, putting more likely matches first.
 decrypts.sort()
