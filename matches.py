@@ -150,31 +150,32 @@ for i, decrypt in enumerate(decrypts[:N_MATCHES_TO_SHOW]):
 # * [x] Use the above to build a [(max_rank, word_list)*] list.
 # * [x] Sort that sucka.
 # * [x] Print out the top N_MATCHES_TO_SHOW results.
-# * [ ] Comment out old code below (if False it).
+# * [x] Comment out old code below (if False it).
 # * [ ] Debug.
 # * [ ] Review script and drop unused globals and functions.
 
 
+if False:
 
-crypt = sys.argv[1]
-num_crypt_letters = len(set(list(crypt)))
-N = len(crypt)
+    crypt = sys.argv[1]
+    num_crypt_letters = len(set(list(crypt)))
+    N = len(crypt)
 
-with open('/usr/share/dict/words') as f:
-    # Pre-process for any uppercase letters in crypt.
-    words = [
-            word.strip().lower()
-            for word in f
-            if len(word.strip()) == N and all(
-                crypt[i].islower() or word[i].upper() == crypt[i]
-                for i in range(N)
-            )
-    ]
+    with open('/usr/share/dict/words') as f:
+        # Pre-process for any uppercase letters in crypt.
+        words = [
+                word.strip().lower()
+                for word in f
+                if len(word.strip()) == N and all(
+                    crypt[i].islower() or word[i].upper() == crypt[i]
+                    for i in range(N)
+                )
+        ]
 
-# Since we've pre-filtered for the exact-match (uppercase) letters, we can now
-# safely lowercase `crypt` and match against it.
-crypt = crypt.lower()
+    # Since we've pre-filtered for the exact-match (uppercase) letters, we can now
+    # safely lowercase `crypt` and match against it.
+    crypt = crypt.lower()
 
-for word in words:
-    if is_match(word):
-        print(word)
+    for word in words:
+        if is_match(word):
+            print(word)
