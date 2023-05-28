@@ -55,6 +55,17 @@ def is_match(cipher, word, num_cipher_letters, n):
                 return False
     return True
 
+# This expects a dict that maps cipher letters to plaintext letters, a cipher
+# word, and a compatible plaintext word. If the cipher->plain_word map is
+# compatible with letter_map, the new combined map is returned. Otherwise, this
+# returns False.
+def did_update_map(letter_map, cipher, plain_word):
+    assert len(cipher) == len(plain_word)
+    for cipher_let, plain_let in zip(cipher, plain_word):
+        if letter_map.setdefault(cipher_let, plain_let) != plain_let:
+            return False
+    return letter_map
+
 def is_match_old(word):
     global crypt, num_crypt_letters, N
 
@@ -118,7 +129,7 @@ while True:
     decrypt    = []
     for i in range(num_words):
         plain_word = plain_words[i][idx[i]]
-        if did_update_map(letter_map, plain_word):
+        if did_update_map(letter_map, ciphers[i], plain_word):
             max_rank = max(max_rank, idx[i])
             decrypt.append(plain_word)
         else:
@@ -144,7 +155,7 @@ for i, decrypt in enumerate(decrypts[:N_MATCHES_TO_SHOW]):
 
 # TODO HERE
 # * [x] Make is_match() check for capital letter matches.
-# * [ ] Write a function that accepts a partial letter mapping
+# * [x] Write a function that accepts a partial letter mapping
 #       along with a cipher/plain pair, and returns either False
 #       if they are incompatible, or a combined letter mapping.
 # * [x] Use the above to build a [(max_rank, word_list)*] list.
