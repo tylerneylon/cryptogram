@@ -56,16 +56,23 @@ def is_match(cipher, word, num_cipher_letters, n):
                 return False
     return True
 
-# This expects a dict that maps cipher letters to plaintext letters, a cipher
-# word, and a compatible plaintext word. If the cipher->plain_word map is
-# compatible with letter_map, the new combined map is returned. Otherwise, this
-# returns False.
-def did_update_map(letter_map, cipher, plain_word):
+# This expects two dicts, and a cipher/plain_word pair.
+# The `decoder` maps cipher letters to plain letters.
+# The `encoder` maps plain letters to cipher letters.
+# If the cipher->plain_word map is compatible with the encoder/decoder,
+# they are modified and this returns True.
+# Otherwise, this returns False.
+def did_update_map(decoder, encoder, cipher, plain_word):
+    # print(f'did_update_map({letter_map}, {cipher}, {plain_word})')
     assert len(cipher) == len(plain_word)
     for cipher_let, plain_let in zip(cipher, plain_word):
-        if letter_map.setdefault(cipher_let, plain_let) != plain_let:
+        if decoder.setdefault(cipher_let, plain_let) != plain_let:
+            # print(f'Found conflict; cipher->plain {cipher_let}->{plain_let}')
             return False
-    return letter_map
+        if encoder.setdefault(plain_let, cipher_let) != cipher_let:
+            return False
+    # print(f'No conflict, returning updated map {letter_map}')
+    return True
 
 def is_match_old(word):
     global crypt, num_crypt_letters, N
@@ -141,19 +148,20 @@ while True:
     if tuple(idx) not in seen:
         status = f'[{max_depth:3d}] ' + ' '.join(map(str, idx)) + ' ' * 5
         print('\r' + status, end='', flush=True)
+        encoder, decoder = {}, {}
         letter_map = {}
         max_rank   = 0
         decrypt    = []
         for i in range(num_words):
             plain_word = plain_words[i][idx[i]]
-            if did_update_map(letter_map, ciphers[i], plain_word):
+            if did_update_map(decoder, encoder, ciphers[i], plain_word):
                 max_rank = max(max_rank, idx[i])
                 decrypt.append(plain_word)
             else:
                 break
         else:  # Didn't break out.
             decrypts.append((max_rank, decrypt))
-            print('\r' + ' '.join(decrypt) + ' ' *20)  # XXX
+            print('\r' + '*****' + ' '.join(decrypt) + ' ' *20)  # XXX
     seen.add(tuple(idx))
     incrementables = [j for j in range(num_words)
                       if idx[j] < min(len(plain_words[j]), max_depth) - 1]
