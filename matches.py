@@ -30,13 +30,7 @@ from glob import glob
 # ____________________________________________________________
 # Globals and constants
 
-# I use globals for these because it's a small program and this way I don't have
-# to recalculate their values.
-crypt = None  # XXX Needed?
-num_crypt_letters = None
-N = None  # XXX Needed?
-
-N_MATCHES_TO_SHOW = 20
+N_MATCHES_TO_SHOW = 30
 
 
 # ____________________________________________________________
@@ -72,20 +66,6 @@ def did_update_map(decoder, encoder, cipher, plain_word):
         if encoder.setdefault(plain_let, cipher_let) != cipher_let:
             return False
     # print(f'No conflict, returning updated map {letter_map}')
-    return True
-
-def is_match_old(word):
-    global crypt, num_crypt_letters, N
-
-    if len(word) != len(crypt):
-        return False
-    num_word_letters = len(set(list(word)))
-    if num_word_letters != num_crypt_letters:
-        return False
-    for i in range(N):
-        for j in range(i, N):
-            if crypt[i] == crypt[j] and word[i] != word[j]:
-                return False
     return True
 
 def load_dictionary():
@@ -127,15 +107,12 @@ for cipher in ciphers:
         if is_match(cipher, w, num_cipher_letters, n)
     ])
 
-# XXX
-print(f'len(plain_words) = {len(plain_words)}')
-for i, word_list in enumerate(plain_words):
-    print(f'For {ciphers[i]}:')
-    for w in word_list[:3]:
-        print(f'    {w}')
 print('\nList lengths:')
+k = max(map(len, ciphers))
+fmt = f'%-{k}s'
 for i, word_list in enumerate(plain_words):
-    print(f'{ciphers[i]}: {len(word_list)}')
+    print(fmt % ciphers[i], len(word_list))
+print()
 
 # Iterate over all tuples from plain_words, and pick out the compatible ones.
 
@@ -144,6 +121,7 @@ idx = [0] * num_words
 max_depth = 0
 max_max_depth = max(map(len, plain_words))
 seen = set()
+num_found = 0
 while True:
     if tuple(idx) not in seen:
         status = f'[{max_depth:3d}] ' + ' '.join(map(str, idx)) + ' ' * 5
@@ -161,7 +139,12 @@ while True:
                 break
         else:  # Didn't break out.
             decrypts.append((max_rank, decrypt))
-            print('\r' + '*****' + ' '.join(decrypt) + ' ' *20)  # XXX
+            num_found += 1
+            print('\r' + f'{num_found:2d}.' + ' '.join(decrypt) + ' ' * 20)
+            if num_found == N_MATCHES_TO_SHOW:
+                print()
+                print(f'(Stopping after finding {N_MATCHES_TO_SHOW} matches.)')
+                sys.exit(0)
     seen.add(tuple(idx))
     incrementables = [j for j in range(num_words)
                       if idx[j] < min(len(plain_words[j]), max_depth) - 1]
@@ -175,50 +158,16 @@ while True:
         idx[j] += 1
         for k in range(j + 1, num_words):
             idx[k] = 0
-print()  # XXX
 
-# Sort the potential decrypts, putting more likely matches first.
-decrypts.sort()
-
-# Print out the top results.
-for i, decrypt in enumerate(decrypts[:N_MATCHES_TO_SHOW]):
-    print(f'{i + 1:2d}.', ' '.join(decrypt[1]))
-
-
-# TODO HERE
-# * [x] Make is_match() check for capital letter matches.
-# * [x] Write a function that accepts a partial letter mapping
-#       along with a cipher/plain pair, and returns either False
-#       if they are incompatible, or a combined letter mapping.
-# * [x] Use the above to build a [(max_rank, word_list)*] list.
-# * [x] Sort that sucka.
-# * [x] Print out the top N_MATCHES_TO_SHOW results.
-# * [x] Comment out old code below (if False it).
-# * [ ] Debug.
-# * [ ] Review script and drop unused globals and functions.
-
-
+# I may consider changing the interface.
+# For example, for fast searches, the printout below might look better.
+# So I will keep around this code, but it is not currently active.
 if False:
+    print()
 
-    crypt = sys.argv[1]
-    num_crypt_letters = len(set(list(crypt)))
-    N = len(crypt)
+    # Sort the potential decrypts, putting more likely matches first.
+    decrypts.sort()
 
-    with open('/usr/share/dict/words') as f:
-        # Pre-process for any uppercase letters in crypt.
-        words = [
-                word.strip().lower()
-                for word in f
-                if len(word.strip()) == N and all(
-                    crypt[i].islower() or word[i].upper() == crypt[i]
-                    for i in range(N)
-                )
-        ]
-
-    # Since we've pre-filtered for the exact-match (uppercase) letters, we can now
-    # safely lowercase `crypt` and match against it.
-    crypt = crypt.lower()
-
-    for word in words:
-        if is_match(word):
-            print(word)
+    # Print out the top results.
+    for i, decrypt in enumerate(decrypts[:N_MATCHES_TO_SHOW]):
+        print(f'{i + 1:2d}.', ' '.join(decrypt[1]))
