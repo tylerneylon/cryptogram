@@ -37,6 +37,7 @@
 # Imports
 
 import json
+import math
 import random
 import subprocess
 import sys
@@ -121,7 +122,18 @@ def print_with_highlights(s, white_lets, green_lets):
             bytes_to_print += [green_seq, c_byte, reset_seq]
         else:
             bytes_to_print.append(c_byte)
-    sys.stdout.buffer.write(b''.join(bytes_to_print + [b'\n']))
+    sys.stdout.buffer.write(b''.join(bytes_to_print))
+
+def print_progress_bar(perc_done):
+    block = '█'
+    half  = '▌'
+    width = 30
+    n = width * perc_done
+    s = block * math.floor(n)
+    if (n - len(s)) > 0.5:
+        s += half
+    s += ' ' * (width - len(s))
+    print(' |' + s + '|')
 
 def show_history(crypt, swaps, final):
     """ Show the swap history of the cryptogram. """
@@ -129,9 +141,17 @@ def show_history(crypt, swaps, final):
     print(f'Start   {s}')
     for pair in swaps:
         s, _ = swap(s, set(), pair[0], pair[1])
+
+        # Print the current swap.
         print(f'{pair[0]}<->{pair[1]}   ', end='', flush=True)
-        correct_lets = [let for (i, let) in enumerate(s) if let == final[i]]
+
+        # Print the current string `s`, highlighting correct letters.
+        correct_lets = {let for (i, let) in enumerate(s) if let == final[i]}
         print_with_highlights(s, pair, correct_lets)
+
+        # Print out a progress bar of how far we've come so far.
+        perc_done = sum([let in correct_lets for let in s]) / len(s)
+        print_progress_bar(perc_done)
 
 def show_in_columns(words, col_width=6, max_width=65, indent=4):
     """ Print the words in `words` in colums of width `col_width`, in lines of
