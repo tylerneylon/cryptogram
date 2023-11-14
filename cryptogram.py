@@ -199,7 +199,7 @@ def show_common_elements():
     print('Common 4-letter words:')
     show_in_columns(four_letters)
 
-    double_letters = ['ss', 'ee', 'tt', 'ff', 'll', 'mm', 'oo']
+    double_letters = ['ss', 'ee', 'tt', 'ff', 'll', 'mm', 'oo', 'pp']
     print()
     print('Common double letters:')
     show_in_columns(double_letters)
