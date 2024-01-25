@@ -30,6 +30,9 @@
 #     the history to show how much back-and-forth went on in solving
 #     a cryptogram. For example, if the solution had zero bad swaps,
 #     it would be neat to visually see that.
+#   * It would be cool to add an optional timer so I could see how
+#     long it took me to solve a puzzle. I could use H (capital) to print
+#     out a history that includes timing info.
 #
 
 
