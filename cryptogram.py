@@ -26,10 +26,8 @@
 #   * Currently, when printing out your history (the `h` command),
 #     shuffles will appear as a long list of swaps. It would be nicer
 #     to have a single line for a shuffle that presents it as such.
-#   * It would be nice to show a kind of vertical line plot alongside
-#     the history to show how much back-and-forth went on in solving
-#     a cryptogram. For example, if the solution had zero bad swaps,
-#     it would be neat to visually see that.
+#   * I think that, in printing the history, letter highlights don't currently
+#     display correctly. It would be nice if they did.
 #   * It would be cool to add an optional timer so I could see how
 #     long it took me to solve a puzzle. I could use H (capital) to print
 #     out a history that includes timing info.
