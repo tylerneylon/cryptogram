@@ -31,6 +31,7 @@
 #   * It would be cool to add an optional timer so I could see how
 #     long it took me to solve a puzzle. I could use H (capital) to print
 #     out a history that includes timing info.
+#   * Don't count punctuation in the progress bar for the history command.
 #
 
 
