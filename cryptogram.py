@@ -41,6 +41,8 @@
 import json
 import math
 import random
+import re
+import string
 import subprocess
 import sys
 
@@ -104,26 +106,42 @@ def print_curr_str(s, marked_l):
             bytes_to_print.append(c_byte)
     sys.stdout.buffer.write(b''.join(bytes_to_print + [b'\n']))
 
-def print_with_highlights(s, white_lets, green_lets):
+def get_tokens(s):
+    """
+		Breaks the string s into a list of substrings such that:
+		- Each substring either has no spaces or punctuation, or
+		- Each substring is entirely spaces or punctuation.
+    """
+    return re.findall(r'[^\s\W]+|[\s\W]+', s)
+
+def print_with_highlights(s, white_lets, green_lets, correct_token_idx):
     """ Print out the string `s` while highlighting characters in white or green
         (ish) if they're in white_lets or green_lets, respectively.
+        tokens with indexes in correct_token_idx will also receive a highlighted
+        background color.
     """
-    global white_seq, green_seq, reset_seq
+    global white_seq, green_seq, gray_seq, hilite_seq, reset_seq
 
     if white_seq is None:
-        white_seq = get_cmd_output('tput setaf 7')
-        green_seq = get_cmd_output('tput setaf 118')
-        reset_seq = get_cmd_output('tput sgr0')
+        white_seq  = get_cmd_output('tput setaf 7')
+        green_seq  = get_cmd_output('tput setaf 118')
+        gray_seq   = get_cmd_output('tput setaf 12')
+        hilite_seq = get_cmd_output('tput setab 239')
+        reset_seq  = get_cmd_output('tput sgr0')
 
     bytes_to_print = []
-    for c in s:
-        c_byte = c.encode()
-        if c in white_lets:
-            bytes_to_print += [white_seq, c_byte, reset_seq]
-        elif c in green_lets:
-            bytes_to_print += [green_seq, c_byte, reset_seq]
-        else:
-            bytes_to_print.append(c_byte)
+    for token_idx, token in enumerate(get_tokens(s)):
+        if token_idx in correct_token_idx:
+            bytes_to_print.append(hilite_seq)
+        for c in token:
+            c_byte = c.encode()
+            if c in white_lets:
+                bytes_to_print.extend([white_seq, c_byte])
+            elif c in green_lets:
+                bytes_to_print.extend([green_seq, c_byte])
+            else:
+                bytes_to_print.extend([gray_seq, c_byte])
+        bytes_to_print.append(reset_seq)
     sys.stdout.buffer.write(b''.join(bytes_to_print))
 
 def print_progress_bar(perc_done):
@@ -139,17 +157,30 @@ def print_progress_bar(perc_done):
 
 def show_history(crypt, swaps, final):
     """ Show the swap history of the cryptogram. """
+
+    good_tokens = get_tokens(final)
     s = crypt
+
     print(f'Start   {s}')
+
     for pair in swaps:
         s, _ = swap(s, set(), pair[0], pair[1])
+        tokens = get_tokens(s)
+
+        # Find the subset of correct tokens in `s`.
+        is_word = r'[^\s\W]+'
+        correct_token_idx = {
+                i
+                for i, token in enumerate(tokens)
+                if token == good_tokens[i] and re.match(is_word, token)
+        }
 
         # Print the current swap.
         print(f'{pair[0]}<->{pair[1]}   ', end='', flush=True)
 
         # Print the current string `s`, highlighting correct letters.
         correct_lets = {let for (i, let) in enumerate(s) if let == final[i]}
-        print_with_highlights(s, pair, correct_lets)
+        print_with_highlights(s, pair, correct_lets, correct_token_idx)
 
         # Print out a progress bar of how far we've come so far.
         perc_done = sum([let in correct_lets for let in s]) / len(s)
