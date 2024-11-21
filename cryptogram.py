@@ -33,12 +33,16 @@
 #     out a history that includes timing info.
 #   * Don't count punctuation in the progress bar for the history command.
 #
-#   * Fix typos in the readme; update the history image.
+#   * Fix typos in the readme; update the example history image.
 #   * Add that pressing R will re-run all the saved commands for the given
 #     input. This fails with a message without any saved commands; if there are
 #     both current commands and saved commands, this prompts for confirmation to
 #     discard the current commands. Otherwise it re-enacts all previous
 #     commands, including those to highlight letters (not just swaps).
+#   * Add that pressing t will print out the top N words for each single cipher
+#     word, all neatly underneath the current cipher text. I could consider also
+#     printing out the most common letter mappings below that. This could act as
+#     a kind of strong hint.
 
 
 # ____________________________________________________________
