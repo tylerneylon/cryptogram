@@ -57,15 +57,26 @@ def is_match(cipher, word, num_cipher_letters, n):
 # they are modified and this returns True.
 # Otherwise, this returns False.
 def did_update_map(decoder, encoder, cipher, plain_word):
-    # print(f'did_update_map({letter_map}, {cipher}, {plain_word})')
-    assert len(cipher) == len(plain_word)
-    for cipher_let, plain_let in zip(cipher, plain_word):
-        if decoder.setdefault(cipher_let, plain_let) != plain_let:
-            # print(f'Found conflict; cipher->plain {cipher_let}->{plain_let}')
-            return False
-        if encoder.setdefault(plain_let, cipher_let) != cipher_let:
-            return False
-    # print(f'No conflict, returning updated map {letter_map}')
+
+    # This implementation is a little verbose, but I found it to be a bit faster
+    # than a smaller version that relies on setdefault calls.
+
+    for i in range(len(cipher)):
+        cipher_letter = cipher[i]
+        plain_letter  = plain_word[i]
+
+        if cipher_letter in decoder:
+            if decoder[cipher_letter] != plain_letter:
+                return False
+        else:
+            decoder[cipher_letter] = plain_letter
+
+        if plain_letter in encoder:
+            if encoder[plain_letter] != cipher_letter:
+                return False
+        else:
+            encoder[plain_letter] = cipher_letter
+
     return True
 
 def load_dictionary():
@@ -78,6 +89,10 @@ def load_dictionary():
             for word in f:
                 w = word.lower().strip()
                 words[len(w)].append(w)
+
+def itoa(i):
+    """ Return a length-3 string version of i, expected to be in [0, 1000). """
+    return f'{i:3d}'
 
 
 # ____________________________________________________________
@@ -116,58 +131,63 @@ print()
 
 # Iterate over all tuples from plain_words, and pick out the compatible ones.
 
-decrypts = []  # Each item is (max_rank, word_list).
-idx = [0] * num_words
-max_depth = 0
-max_max_depth = max(map(len, plain_words))
-seen = set()
-num_found = 0
-while True:
-    if tuple(idx) not in seen:
-        status = f'[{max_depth:3d}] ' + ' '.join(map(str, idx)) + ' ' * 5
-        print('\r' + status, end='', flush=True)
-        encoder, decoder = {}, {}
-        letter_map = {}
-        max_rank   = 0
-        decrypt    = []
-        for i in range(num_words):
-            plain_word = plain_words[i][idx[i]]
-            if did_update_map(decoder, encoder, ciphers[i], plain_word):
-                max_rank = max(max_rank, idx[i])
-                decrypt.append(plain_word)
-            else:
+def find_matches():
+    decrypts = []  # Each item is (max_rank, word_list).
+    idx = [0] * num_words
+    max_depth = 0
+    max_max_depth = max(map(len, plain_words))
+    max_max_depth = 35  # XXX
+    seen = set()
+    num_found = 0
+    print_count = 0
+    while True:
+        if tuple(idx) not in seen:
+
+            if print_count % 10_000 == 0:
+                status = f'[{max_depth:3d}] ' + ' '.join(map(itoa, idx)) + ' ' * 5
+                print('\r' + status, end='', flush=True)
+            print_count += 1
+
+            encoder, decoder = {}, {}
+            letter_map = {}
+            max_rank   = 0
+            decrypt    = []
+            for i in range(num_words):
+                plain_word = plain_words[i][idx[i]]
+                if did_update_map(decoder, encoder, ciphers[i], plain_word):
+                    max_rank = max(max_rank, idx[i])
+                    decrypt.append(plain_word)
+                else:
+                    break
+            else:  # Didn't break out.
+                decrypts.append((max_rank, decrypt))
+                num_found += 1
+                print('\r' + f'{num_found:2d}.' + ' '.join(decrypt) + ' ' * 20)
+                if num_found == N_MATCHES_TO_SHOW:
+                    print()
+                    print(f'(Stopping after finding {N_MATCHES_TO_SHOW} matches.)')
+                    sys.exit(0)
+        seen.add(tuple(idx))
+
+        # This next block updates idx, counting up while keep each element <=
+        # max_depth. Note that we will repeat some idx values, but skip those
+        # quickly by looking at `seen`. However, I wonder if there's a better
+        # way to do this that avoids the need for `seen` at all.
+        incrementables = [
+                j
+                for j in range(num_words)
+                # Don't use `min` here; this is faster without it.
+                if idx[j] < len(plain_words[j]) - 1 and idx[j] < max_depth - 1
+        ]
+        if len(incrementables) == 0:
+            if max_depth == max_max_depth:
                 break
-        else:  # Didn't break out.
-            decrypts.append((max_rank, decrypt))
-            num_found += 1
-            print('\r' + f'{num_found:2d}.' + ' '.join(decrypt) + ' ' * 20)
-            if num_found == N_MATCHES_TO_SHOW:
-                print()
-                print(f'(Stopping after finding {N_MATCHES_TO_SHOW} matches.)')
-                sys.exit(0)
-    seen.add(tuple(idx))
-    incrementables = [j for j in range(num_words)
-                      if idx[j] < min(len(plain_words[j]), max_depth) - 1]
-    if len(incrementables) == 0:
-        if max_depth == max_max_depth:
-            break
-        max_depth += 1
-        idx = [0] * num_words
-    else:
-        j = incrementables[-1]
-        idx[j] += 1
-        for k in range(j + 1, num_words):
-            idx[k] = 0
+            max_depth += 1
+            idx = [0] * num_words
+        else:
+            j = incrementables[-1]
+            idx[j] += 1
+            for k in range(j + 1, num_words):
+                idx[k] = 0
 
-# I may consider changing the interface.
-# For example, for fast searches, the printout below might look better.
-# So I will keep around this code, but it is not currently active.
-if False:
-    print()
-
-    # Sort the potential decrypts, putting more likely matches first.
-    decrypts.sort()
-
-    # Print out the top results.
-    for i, decrypt in enumerate(decrypts[:N_MATCHES_TO_SHOW]):
-        print(f'{i + 1:2d}.', ' '.join(decrypt[1]))
+find_matches()
