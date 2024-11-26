@@ -85,6 +85,8 @@ def load_dictionary():
 
     words = defaultdict(list)  # This maps n to the words of length n.
     for fname in glob('data/*'):
+        if fname.endswith('.json') or fname.endswith('.py'):
+            continue
         with open(fname) as f:
             for word in f:
                 w = word.lower().strip()
@@ -136,7 +138,6 @@ def find_matches():
     idx = [0] * num_words
     max_depth = 0
     max_max_depth = max(map(len, plain_words))
-    max_max_depth = 35  # XXX
     seen = set()
     num_found = 0
     print_count = 0

@@ -1,2 +1,4 @@
 cryptogram_log.jsonl
 tmp_swaps.txt
+.aider*
+.env

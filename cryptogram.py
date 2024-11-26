@@ -20,6 +20,7 @@
     > s   --> Shuffle all letters randomly.
     > c   --> Show common short English words.
     > h   --> Print an abbreviated work history, for sharing your process.
+    > b   --> Toggle showing bigram frequency data.
     > q   --> Quit.
 """
 # TODO:
@@ -69,6 +70,10 @@ green_seq = None
 reset_seq = None
 white_seq = None
 
+bigram_mode = False
+en_bigram_freqs = None
+
+
 # ____________________________________________________________
 # Functions
 
@@ -91,6 +96,60 @@ def show_letter_frequencies(s):
     letters = [letter for letter, _ in letter_counts.most_common()[:10]]
     print('Cipher letters: ', ' '.join(letters))
     print('English letters:', 'e t a o i n s r h d')
+
+def show_bigram_tables(s):
+    """ Display bigram frequency tables for s and for English. """
+
+    # Ensure the English bigram frequencies are loaded.
+    global en_bigram_freqs
+    if not en_bigram_freqs:
+        with open('data/bigram_freqs.json') as f:
+            en_bigram_freqs = json.load(f)
+
+    # Calculate bigram frequencies for the current string.
+    bigram_counts = Counter()
+    tokens = get_tokens(s)
+    for token in tokens:
+        if not is_word_token(token):
+            continue
+        for i in range(len(token) - 1):
+            bigram_counts[token[i:i+2]] += 1
+    total_bigrams = sum(bigram_counts.values())
+    bigram_freqs = {
+            bigram: count / total_bigrams
+            for bigram, count in bigram_counts.items()
+    }
+
+    # Normalize and map frequencies to the color range [232, 255].
+    max_fr = max(bigram_freqs.values(), default=1)
+    color_map = lambda freq: int(232 + freq / max_fr * 23)
+    en_max_fr = max(en_bigram_freqs.values())
+    en_color_map = lambda freq: int(232 + freq / en_max_fr * 23)
+
+    # Prepare the bigram tables.
+    color_count = Counter()
+    for row in range(26):
+        row_str = ''
+        for col in range(26):
+            bigram = chr(97 + row) + chr(97 + col)
+            # print(f'bigram={bigram}')
+            # print('raw freq:', bigram_freqs.get(bigram, 0))
+            color = color_map(bigram_freqs.get(bigram, 0))
+            # print(f'color={color}')
+            color_count[color] += 1
+            if color == 232:
+                fg_color = 232 if (row + col) % 2 == 0 else 243
+                row_str += f"\033[38;5;{fg_color}m"
+            row_str += f'\033[48;5;{color}m{bigram}\033[0m'
+        row_str += '  '
+        for col in range(26):
+            bigram = chr(97 + row) + chr(97 + col)
+            color = en_color_map(en_bigram_freqs.get(bigram, 0))
+            if color == 232:
+                fg_color = 232 if (row + col) % 2 == 0 else 243
+                row_str += f"\033[38;5;{fg_color}m"
+            row_str += f'\033[48;5;{color}m{bigram}\033[0m'
+        print(row_str)
 
 def get_cmd_output(cmd):
     """ Return stdout, as a bytes object, from running `cmd`. """
@@ -123,6 +182,9 @@ def get_tokens(s):
 		- Each substring is entirely spaces or punctuation.
     """
     return re.findall(r'[^\s\W]+|[\s\W]+', s)
+
+def is_word_token(s):
+    return bool(re.match(r'[^\s\W]+', s))
 
 def print_with_highlights(s, white_lets, green_lets, correct_token_idx):
     """ Print out the string `s` while highlighting characters in white or green
@@ -285,6 +347,10 @@ while True:
     elif inp == 'f':
         show_letter_frequencies(curr_str)
 
+    elif inp == 'b':
+        bigram_mode = not bigram_mode
+        print(f"Bigram mode {'on' if bigram_mode else 'off'}.")
+
     elif inp == '?':
         print(__doc__)
 
@@ -313,3 +379,6 @@ while True:
         curr_str, marked_l = swap(curr_str, marked_l, inp[0], inp[1])
 
     print_curr_str(curr_str, marked_l)
+
+    if bigram_mode:
+        show_bigram_tables(curr_str)
